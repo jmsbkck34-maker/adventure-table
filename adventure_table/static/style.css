@@ -1,0 +1,28 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101520; color: #eef0f5; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem max(1rem, calc((100% - 1350px)/2)); background: #20283a; }
+h1, h2, p { margin: 0 0 .7rem; }
+h1 { font-size: 1.6rem; } h2 { font-size: 1.15rem; }
+main { max-width: 1350px; margin: auto; padding: 1rem; }
+.card { background: #20283a; padding: 1rem; border-radius: .75rem; margin-bottom: 1rem; min-width: 0; }
+.columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 1rem; align-items: start; }
+.columns .card { margin: 0; }
+.room-head, .inline, .item { display: flex; gap: .7rem; align-items: center; justify-content: space-between; }
+.inline > * { flex: 1; min-width: 0; }
+label { display: block; margin: .6rem 0; }
+input, textarea, select { display: block; width: 100%; margin-top: .25rem; padding: .55rem; background: #101520; color: inherit; border: 1px solid #6c7690; border-radius: .35rem; font: inherit; }
+button, a { cursor: pointer; color: white; }
+button { background: #7054b2; border: 0; border-radius: .4rem; padding: .55rem .8rem; font: inherit; }
+button.secondary { background: #45516a; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #e6ca82; }
+a { color: #e6ca82; }
+.error { background: #702a36; padding: .8rem; border-radius: .4rem; }
+.grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); border: 1px solid #73809b; width: 100%; aspect-ratio: 1; margin: .8rem 0; }
+.grid button { border: 1px solid #46546d; border-radius: 0; padding: 0; font-size: .75rem; overflow: hidden; background: #29394b; }
+.grid button.occupied { background: #7054b2; }
+.item { border-top: 1px solid #45516a; padding: .5rem 0; flex-wrap: wrap; }
+.item span { overflow-wrap: anywhere; }
+.selected { outline: 2px solid #e6ca82; }
+#notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }

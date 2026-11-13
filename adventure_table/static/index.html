@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Adventure Table</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="/static/app.js"></script>
+</head>
+<body>
+  <header><div><h1>Adventure Table</h1><p>Gather your party. Tell your story.</p></div><button id="leave" hidden>Leave room</button></header>
+  <main>
+    <p id="error" class="error" role="alert" hidden></p>
+    <section id="welcome" class="card">
+      <h2>Start an adventure</h2>
+      <p>Prototype for local testing. Discord voice runs separately.</p>
+      <form id="create"><label>Room name <input name="name" maxlength="80" required placeholder="The Lantern Road"></label><button>Create room</button></form>
+      <p>Have an invite? Open the GM or player link supplied by your group.</p>
+    </section>
+    <section id="invites" class="card" hidden>
+      <h2>Save your links</h2><p>Save the GM link privately. Share only the player link. These links cannot be recovered later.</p>
+      <label>GM link <input id="gm-link" readonly></label>
+      <label>Player invite <input id="player-link" readonly></label>
+      <button id="dismiss-invites">I've saved my links</button>
+    </section>
+    <div id="room" hidden>
+      <section class="card room-head"><div><h2 id="room-name"></h2><span id="role"></span></div><a id="voice-link" target="_blank" rel="noopener noreferrer" hidden>Join Discord voice</a></section>
+      <div class="columns">
+        <section class="card"><h2>Shared map</h2><p>Select a token, then select a square to move it. Players can move any token.</p>
+          <div id="grid" class="grid" aria-label="10 by 10 game map"></div>
+          <form id="token-form"><label>New token <input name="name" maxlength="30" required placeholder="Token name"></label><button>Add token</button></form>
+          <div id="tokens"></div>
+        </section>
+        <section class="card"><h2>Characters &amp; initiative</h2><p>Order is highest initiative first. Select Edit to update a character.</p>
+          <form id="character-form"><input name="id" type="hidden">
+            <label>Name <input name="name" maxlength="40" required></label>
+            <label>Details <input name="details" maxlength="400" placeholder="Class, abilities, or notes"></label>
+            <div class="inline"><label>HP <input name="hp" type="number" min="0" max="9999" value="10" required></label><label>Initiative <input name="initiative" type="number" min="-100" max="100" value="0" required></label></div>
+            <button>Save character</button><button type="button" id="clear-character" class="secondary">Clear</button>
+          </form><div id="characters"></div>
+        </section>
+        <section class="card"><h2>Dice</h2><form id="roll-form">
+          <label>Your name <input name="player" maxlength="30" required></label>
+          <div class="inline"><label>Count <input name="count" type="number" min="1" max="20" value="1" required></label><label>Die <select name="sides"><option>20</option><option>4</option><option>6</option><option>8</option><option>10</option><option>12</option><option>100</option></select></label><label>Modifier <input name="modifier" type="number" min="-100" max="100" value="0" required></label></div>
+          <button>Roll</button>
+        </form><ol id="rolls"></ol></section>
+        <section class="card"><h2>Story &amp; shared notes</h2><p id="notes"></p><form id="notes-form" hidden><label>GM: edit shared notes <textarea name="text" maxlength="10000" rows="5"></textarea></label><button>Save shared notes</button></form></section>
+        <section class="card" id="gm-tools" hidden><h2>GM tools</h2><form id="voice-form"><label>Discord channel link <input name="url" type="url" maxlength="300" placeholder="https://discord.com/channels/..."></label><button>Save voice link</button></form><form id="private-form"><label>Private GM notes <textarea name="text" rows="5" maxlength="10000"></textarea></label><button>Save private notes</button></form></section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
