@@ -1,0 +1,9 @@
+{
+  "buildCommand": "yarn build",
+  "devCommand": "yarn start",
+  "env": {
+    "REACT_APP_VERSION": "1.10.2"
+  },
+  "framework": "react",
+  "installCommand": "yarn install"
+}
