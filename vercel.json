@@ -4,7 +4,8 @@
   "env": {
     "REACT_APP_VERSION": "1.10.2",
     "NODE_ENV": "production",
-    "CI": "false"
+    "CI": "false",
+    "NODE_OPTIONS": "--openssl-legacy-provider"
   },
   "framework": "create-react-app",
   "installCommand": "yarn install --network-timeout=100000",
