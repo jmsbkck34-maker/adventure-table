@@ -1,6 +1,6 @@
 # 🚀 Vercel Deployment Guide
 
-## ✅ Vercel Ready (No Serverless Functions)
+## ✅ Vercel Ready (Node.js 17+ Compatible)
 
 Adventure Table is a **React frontend app** deployed to Vercel CDN. The backend runs separately in Docker.
 
@@ -8,6 +8,7 @@ Adventure Table is a **React frontend app** deployed to Vercel CDN. The backend 
 - **Frontend:** React (Create React App) → Vercel CDN ✅
 - **Backend:** Docker container (separate deployment) ✅
 - **Build heap:** 1536 MB (well under Hobby limit) ✅
+- **OpenSSL:** Legacy provider enabled (Node 17+ compat) ✅
 - **Functions pattern:** Removed (no serverless functions needed) ✅
 
 ---
@@ -95,6 +96,19 @@ vercel deploy --prod
 ---
 
 ## 🔧 Troubleshooting
+
+### Build Failed with OpenSSL Error?
+
+**If you see: `error:0308010C:digital envelope routines::unsupported`**
+
+This is fixed! The NODE_OPTIONS environment variable enables legacy OpenSSL provider.
+- Vercel will automatically use this on rebuild
+- No action needed
+
+**If error persists:**
+1. Clear Vercel build cache (dashboard → Settings → Build Cache → Clear All)
+2. Trigger redeploy
+3. Should succeed on next build
 
 ### Build Still Fails?
 
