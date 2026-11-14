@@ -8,6 +8,7 @@ import AppServer from "./entities/AppServer";
 import Controller from "./controllers/Controller";
 import GameServer from "./entities/GameServer";
 import Global from "./entities/Global";
+import DndBeyondController from "./controllers/DndBeyondController";
 import HealthcheckController from "./controllers/HealthcheckController";
 import IceServer from "./entities/IceServer";
 import IceServerController from "./controllers/IceServerController";
@@ -48,6 +49,7 @@ const globalMiddleware: Array<RequestHandler> = [helmet(), cors(corsConfig)];
 const controllers: Array<Controller> = [
   new HealthcheckController(),
   new IceServerController(iceServer),
+  new DndBeyondController(),
 ];
 
 server.loadMiddleware(globalMiddleware);
