@@ -1,13 +1,14 @@
 # 🚀 Vercel Deployment Guide
 
-## ✅ Hobby Plan Optimized (Ready to Deploy!)
+## ✅ Vercel Ready (No Serverless Functions)
 
-Adventure Table is now optimized for **Vercel Hobby plan** (2048 MB memory limit).
+Adventure Table is a **React frontend app** deployed to Vercel CDN. The backend runs separately in Docker.
 
-### What Changed
-- Serverless function memory: 3008 MB → **1024 MB** ✅
-- Build heap allocation: 4096 MB → **1536 MB** ✅
-- Everything else: Unchanged & working ✅
+### Configuration
+- **Frontend:** React (Create React App) → Vercel CDN ✅
+- **Backend:** Docker container (separate deployment) ✅
+- **Build heap:** 1536 MB (well under Hobby limit) ✅
+- **Functions pattern:** Removed (no serverless functions needed) ✅
 
 ---
 
@@ -45,19 +46,21 @@ vercel deploy --prod
 
 ## 📊 Memory Configuration
 
-| Component | Before | After | Limit |
-|-----------|--------|-------|-------|
-| Build heap | 4096 MB | 1536 MB | ✅ OK |
-| Functions | 3008 MB | 1024 MB | ✅ OK |
-| Plan | Pro | Hobby | 2048 MB |
+| Component | Setting | Limit | Status |
+|-----------|---------|-------|--------|
+| Build heap | 1536 MB | 2048 MB | ✅ OK |
+| Frontend only | React CDN | Unlimited | ✅ OK |
+| No functions | — | — | ✅ Removed |
+| Plan | Hobby | 2048 MB | ✅ OK |
 
 ---
 
 ## 🎯 Performance Impact
 
-**Build time:** Slightly longer (~1-2 min) but still fast
-**Runtime:** Unchanged - sprites & character builder work identically
-**Memory usage:** Optimized to 75% of Hobby limit for safety buffer
+**Build time:** Fast (~2-3 min for React)
+**Runtime:** Instant - static CDN delivery
+**Memory usage:** Optimized - no serverless overhead
+**Deployment:** Hobby plan compatible ✅
 
 ---
 
