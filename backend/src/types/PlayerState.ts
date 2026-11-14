@@ -7,4 +7,6 @@ export type PlayerState = {
   dice: Dice;
   sessionId?: string;
   userId?: string;
+  /** The character this player is playing, shared with the party */
+  character?: unknown;
 };

@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Flex, Box, Text } from "theme-ui";
+import { useEffect, useState } from "react";
+import { Flex, Box, Text, IconButton } from "theme-ui";
 import SimpleBar from "simplebar-react";
 
 import AddPartyMemberButton from "./AddPartyMemberButton";
@@ -10,6 +10,10 @@ import SettingsButton from "../SettingsButton";
 import StartTimerButton from "./StartTimerButton";
 import Timer from "./Timer";
 import DiceTrayButton from "./DiceTrayButton";
+import CharacterCard from "./CharacterCard";
+import CharacterModal from "../../modals/CharacterModal";
+import CharacterSheetModal from "../../modals/CharacterSheetModal";
+import CharacterSheetIcon from "../../icons/CharacterSheetIcon";
 
 import useSetting from "../../hooks/useSetting";
 
@@ -21,6 +25,14 @@ import {
   StreamStartEventHandler,
 } from "../../types/Events";
 import { Timer as TimerType } from "../../types/Timer";
+import { Character } from "../../types/Character";
+import {
+  loadActiveCharacterId,
+  loadCharacterLibrary,
+  normalizeCharacter,
+  saveActiveCharacterId,
+  saveCharacterLibrary,
+} from "../../helpers/character";
 
 type PartyProps = {
   gameId: string;
@@ -83,6 +95,76 @@ function Party({
     };
   }, [playerState.timer, setPlayerState]);
 
+  const [characters, setCharacters] = useState<Character[]>(loadCharacterLibrary);
+  const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
+  // "self" for your own sheet, otherwise the party member's session id
+  const [sheetPlayerId, setSheetPlayerId] = useState<string | null>(null);
+
+  // Bring back the character you were playing last time
+  useEffect(() => {
+    const activeId = loadActiveCharacterId();
+    const character = loadCharacterLibrary().find((c) => c.id === activeId);
+    if (character) {
+      setPlayerState((prevState) => ({ ...prevState, character }));
+    }
+  }, [setPlayerState]);
+
+  function saveLibrary(next: Character[]) {
+    setCharacters(next);
+    saveCharacterLibrary(next);
+  }
+
+  function handleCharacterSave(character: Character) {
+    saveLibrary(
+      characters.some((c) => c.id === character.id)
+        ? characters.map((c) => (c.id === character.id ? character : c))
+        : [...characters, character]
+    );
+    if (playerState.character?.id === character.id) {
+      setPlayerState((prevState) => ({ ...prevState, character }));
+    }
+  }
+
+  function handleCharacterSelect(id: string | null) {
+    const character = id ? characters.find((c) => c.id === id) : undefined;
+    saveActiveCharacterId(character ? character.id : null);
+    setPlayerState((prevState) => ({ ...prevState, character }));
+  }
+
+  function handleCharacterDelete(id: string) {
+    saveLibrary(characters.filter((c) => c.id !== id));
+    if (playerState.character?.id === id) {
+      handleCharacterSelect(null);
+    }
+  }
+
+  function handleHpChange(currentHp: number, tempHp: number) {
+    if (playerState.character) {
+      handleCharacterSave({
+        ...playerState.character,
+        currentHp,
+        tempHp,
+        lastModified: Date.now(),
+      });
+    }
+  }
+
+  // Characters from other players come over the network, so clean them up before showing them
+  const partyCharacters: Record<string, Character | null> = {};
+  for (const [id, player] of Object.entries(partyState)) {
+    partyCharacters[id] = normalizeCharacter(player.character);
+  }
+  const sheetCharacter =
+    sheetPlayerId === "self"
+      ? playerState.character
+      : sheetPlayerId
+      ? partyCharacters[sheetPlayerId] || undefined
+      : undefined;
+  const sheetOwner =
+    sheetPlayerId === "self"
+      ? `${playerState.nickname} (you)`
+      : (sheetPlayerId && partyState[sheetPlayerId]?.nickname) || "";
+
   function handleNicknameChange(newNickname: string) {
     setPlayerState((prevState) => ({ ...prevState, nickname: newNickname }));
   }
@@ -139,21 +221,37 @@ function Party({
             width: "100%",
             minWidth: "112px",
             padding: "0 16px",
-            height: "calc(100% - 232px)",
+            height: "calc(100% - 272px)",
           }}
         >
           <Nickname
             nickname={`${playerState.nickname} (you)`}
             diceRolls={shareDice ? playerState.dice.rolls : undefined}
           />
-          {Object.entries(partyState).map(([id, { nickname, dice }]) => (
-            <Nickname
-              nickname={nickname}
-              key={id}
-              stream={partyStreams[id]}
-              diceRolls={dice.share ? dice.rolls : undefined}
+          {playerState.character && (
+            <CharacterCard
+              character={playerState.character}
+              onClick={() => setSheetPlayerId("self")}
             />
-          ))}
+          )}
+          {Object.entries(partyState).map(([id, { nickname, dice }]) => {
+            const character = partyCharacters[id];
+            return (
+              <Box key={id}>
+                <Nickname
+                  nickname={nickname}
+                  stream={partyStreams[id]}
+                  diceRolls={dice.share ? dice.rolls : undefined}
+                />
+                {character && (
+                  <CharacterCard
+                    character={character}
+                    onClick={() => setSheetPlayerId(id)}
+                  />
+                )}
+              </Box>
+            );
+          })}
           {playerState.timer && <Timer timer={playerState.timer} index={0} />}
           {Object.entries(partyState)
             .filter(([_, { timer }]) => timer)
@@ -167,6 +265,14 @@ function Party({
             ))}
         </SimpleBar>
         <Flex sx={{ flexDirection: "column" }}>
+          <IconButton
+            m={1}
+            aria-label="Characters"
+            title="Characters"
+            onClick={() => setIsCharacterModalOpen(true)}
+          >
+            <CharacterSheetIcon />
+          </IconButton>
           <ChangeNicknameButton
             nickname={playerState.nickname}
             onChange={handleNicknameChange}
@@ -185,6 +291,22 @@ function Party({
           <SettingsButton />
         </Flex>
       </Box>
+      <CharacterModal
+        isOpen={isCharacterModalOpen}
+        onRequestClose={() => setIsCharacterModalOpen(false)}
+        characters={characters}
+        activeId={playerState.character?.id || null}
+        onSave={handleCharacterSave}
+        onDelete={handleCharacterDelete}
+        onSelect={handleCharacterSelect}
+      />
+      <CharacterSheetModal
+        isOpen={sheetPlayerId !== null}
+        onRequestClose={() => setSheetPlayerId(null)}
+        character={sheetCharacter}
+        ownerName={sheetOwner}
+        onHpChange={sheetPlayerId === "self" ? handleHpChange : undefined}
+      />
       <DiceTrayButton
         shareDice={shareDice}
         onShareDiceChange={handleShareDiceChange}
