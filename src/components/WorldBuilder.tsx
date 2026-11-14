@@ -10,6 +10,9 @@ import {
   exportCampaign,
 } from '../generators/campaignManager';
 import { generateBSPDungeon, generateCavern, generateWorldMap } from '../generators/mapGenerator';
+import SpriteLibrary from './SpriteLibrary';
+import SpritePainter, { PlacedSprite } from './SpritePainter';
+import { Sprite } from '../generators/spriteGenerator';
 
 export const WorldBuilder: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -17,6 +20,10 @@ export const WorldBuilder: React.FC = () => {
   const [newCampaignName, setNewCampaignName] = useState('');
   const [newCampaignDesc, setNewCampaignDesc] = useState('');
   const [canvasRef, setCanvasRef] = React.useState<HTMLCanvasElement | null>(null);
+  const [selectedSprite, setSelectedSprite] = useState<Sprite | undefined>();
+  const [placedSprites, setPlacedSprites] = useState<PlacedSprite[]>([]);
+  const [showSpriteLibrary, setShowSpriteLibrary] = useState(false);
+  const [editMode, setEditMode] = useState<'map' | 'sprites'>('map');
 
   useEffect(() => {
     loadCampaigns();
@@ -82,6 +89,7 @@ export const WorldBuilder: React.FC = () => {
     const updated = loadCampaign(selectedCampaign.id);
     if (updated) setSelectedCampaign(updated);
     renderMap(newMap);
+    setPlacedSprites([]);
   };
 
   const renderMap = (map: MapData) => {
@@ -94,20 +102,10 @@ export const WorldBuilder: React.FC = () => {
     const cellSize = Math.floor(canvas.width / map.width);
     canvas.height = map.height * cellSize;
 
-    const biomeColors: Record<string, string> = {
-      water: '#0077be',
-      forest: '#2d5016',
-      grassland: '#90ee90',
-      mountain: '#8b7355',
-      desert: '#edcc81',
-      swamp: '#6b8e23',
-    };
-
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const tile = map.tiles[y][x];
         
-        // Determine color based on tile value
         let color = '#222'; // default wall
         if (tile === 0) color = '#444'; // floor
         else if (tile === 1) color = '#999'; // wall
@@ -151,6 +149,7 @@ export const WorldBuilder: React.FC = () => {
               border: '1px solid #444',
               backgroundColor: '#222',
               color: '#fff',
+              boxSizing: 'border-box',
             }}
           />
           <textarea
@@ -166,6 +165,7 @@ export const WorldBuilder: React.FC = () => {
               backgroundColor: '#222',
               color: '#fff',
               minHeight: '60px',
+              boxSizing: 'border-box',
             }}
           />
           <button
@@ -228,120 +228,202 @@ export const WorldBuilder: React.FC = () => {
       </div>
 
       {/* Main Area: World Building */}
-      <div style={{ padding: '30px', overflowY: 'auto', backgroundColor: '#0a0a0a' }}>
-        {selectedCampaign ? (
-          <div>
-            <h1>{selectedCampaign.name}</h1>
-            <p style={{ color: '#999', marginBottom: '20px' }}>{selectedCampaign.description}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: showSpriteLibrary ? '1fr 280px' : '1fr', height: '100vh', backgroundColor: '#0a0a0a' }}>
+        <div style={{ padding: '30px', overflowY: 'auto' }}>
+          {selectedCampaign ? (
+            <div>
+              <h1>{selectedCampaign.name}</h1>
+              <p style={{ color: '#999', marginBottom: '20px' }}>{selectedCampaign.description}</p>
 
-            {/* Map Generation */}
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{ marginBottom: '15px' }}>🗺️ Maps</h2>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              {/* Edit Mode Tabs */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
                 <button
-                  onClick={() => handleGenerateMap('dungeon')}
+                  onClick={() => setEditMode('map')}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#2196F3',
-                    color: 'white',
+                    padding: '8px 16px',
+                    backgroundColor: editMode === 'map' ? '#0078d4' : '#3e3e42',
+                    color: '#fff',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
                   }}
                 >
-                  🏰 Generate Dungeon
+                  🗺️ Map Editor
                 </button>
                 <button
-                  onClick={() => handleGenerateMap('cavern')}
+                  onClick={() => setEditMode('sprites')}
                   style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#FF9800',
-                    color: 'white',
+                    padding: '8px 16px',
+                    backgroundColor: editMode === 'sprites' ? '#0078d4' : '#3e3e42',
+                    color: '#fff',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
                   }}
                 >
-                  🕳️ Generate Cavern
-                </button>
-                <button
-                  onClick={() => handleGenerateMap('world')}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  🌍 Generate World
+                  🎨 Sprite Painter
                 </button>
               </div>
 
-              {/* Map Preview */}
-              {selectedCampaign.maps.length > 0 && (
-                <div>
-                  <h3>Recent Maps</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                    {selectedCampaign.maps.map((map) => (
-                      <div
-                        key={map.id}
+              {editMode === 'map' ? (
+                <>
+                  {/* Map Generation */}
+                  <div style={{ marginBottom: '30px' }}>
+                    <h2 style={{ marginBottom: '15px' }}>Generate Maps</h2>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => handleGenerateMap('dungeon')}
                         style={{
-                          padding: '15px',
-                          backgroundColor: '#1a1a1a',
-                          borderRadius: '8px',
-                          border: '1px solid #333',
+                          padding: '10px 20px',
+                          backgroundColor: '#2196F3',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
                         }}
                       >
-                        <strong>{map.name}</strong>
-                        <div style={{ fontSize: '0.9em', color: '#999', marginTop: '5px' }}>
-                          {map.width} × {map.height} • {map.type}
+                        🏰 Dungeon
+                      </button>
+                      <button
+                        onClick={() => handleGenerateMap('cavern')}
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#FF9800',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🕳️ Cavern
+                      </button>
+                      <button
+                        onClick={() => handleGenerateMap('world')}
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🌍 World
+                      </button>
+                    </div>
+
+                    {/* Map Preview */}
+                    {selectedCampaign.maps.length > 0 && (
+                      <div>
+                        <h3>Recent Maps</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                          {selectedCampaign.maps.map((map) => (
+                            <div
+                              key={map.id}
+                              style={{
+                                padding: '15px',
+                                backgroundColor: '#1a1a1a',
+                                borderRadius: '8px',
+                                border: '1px solid #333',
+                              }}
+                            >
+                              <strong>{map.name}</strong>
+                              <div style={{ fontSize: '0.9em', color: '#999', marginTop: '5px' }}>
+                                {map.width} × {map.height} • {map.type}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Canvas for current map */}
+                        <div style={{ border: '1px solid #333', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#222' }}>
+                          <canvas
+                            ref={setCanvasRef}
+                            width={800}
+                            height={600}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              height: 'auto',
+                            }}
+                          />
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  
-                  {/* Canvas for current map */}
-                  <div style={{ marginTop: '20px', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
-                    <canvas
-                      ref={setCanvasRef}
-                      width={800}
-                      height={600}
+                </>
+              ) : (
+                <>
+                  {/* Sprite Painter Mode */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <h2 style={{ marginBottom: '15px' }}>Place Objects on Map</h2>
+                    <button
+                      onClick={() => setShowSpriteLibrary(!showSpriteLibrary)}
                       style={{
-                        display: 'block',
-                        width: '100%',
-                        height: 'auto',
-                        backgroundColor: '#222',
+                        padding: '10px 20px',
+                        backgroundColor: '#9C27B0',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
                       }}
-                    />
+                    >
+                      {showSpriteLibrary ? '✕ Hide Library' : '🎨 Open Library'}
+                    </button>
+                    {selectedSprite && (
+                      <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#2d2d30', borderRadius: '4px' }}>
+                        Selected: <strong>{selectedSprite.name}</strong> - Click canvas to place
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
 
-            {/* Export */}
-            <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
-              <h3>📥 Export Campaign</h3>
-              <p style={{ color: '#999', marginBottom: '10px' }}>Save your campaign as JSON file</p>
-              <button
-                onClick={() => handleExportCampaign(selectedCampaign)}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#9C27B0',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Download Campaign
-              </button>
+                  {selectedCampaign.maps.length > 0 && (
+                    <div style={{ border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
+                      <SpritePainter
+                        width={800}
+                        height={600}
+                        selectedSprite={selectedSprite}
+                        placedSprites={placedSprites}
+                        onSpritePlaced={(sprite) => setPlacedSprites([...placedSprites, sprite])}
+                        onSpritesUpdate={setPlacedSprites}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Export */}
+              <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
+                <h3>📥 Export Campaign</h3>
+                <p style={{ color: '#999', marginBottom: '10px' }}>Save your campaign as JSON</p>
+                <button
+                  onClick={() => handleExportCampaign(selectedCampaign)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#9C27B0',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Download Campaign
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', color: '#999', marginTop: '100px' }}>
-            <h2>Select or create a campaign to get started</h2>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#999', marginTop: '100px' }}>
+              <h2>Select or create a campaign to get started</h2>
+            </div>
+          )}
+        </div>
+
+        {/* Sprite Library Sidebar */}
+        {showSpriteLibrary && editMode === 'sprites' && (
+          <div style={{ borderLeft: '1px solid #333', overflowY: 'auto' }}>
+            <SpriteLibrary
+              onSpriteSelect={(sprite) => setSelectedSprite(sprite)}
+            />
           </div>
         )}
       </div>
