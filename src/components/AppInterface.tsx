@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import WorldBuilder from './components/WorldBuilder';
-import MapGenerator from './components/MapGenerator';
-import CampaignTools from './components/CampaignTools';
-import DnDBeyondPanel from './components/DnDBeyondPanel';
+import WorldBuilder from './WorldBuilder';
+import MapGenerator from './MapGenerator';
+import CampaignTools from './CampaignTools';
+import DnDBeyondPanel from './DnDBeyondPanel';
 
 type Tab = 'vtt' | 'builder' | 'tools' | 'reference';
 
