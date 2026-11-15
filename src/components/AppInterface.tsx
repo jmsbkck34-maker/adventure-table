@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import WorldBuilder from './WorldBuilder';
-import MapGenerator from './MapGenerator';
 import CampaignTools from './CampaignTools';
 import DnDBeyondPanel from './DnDBeyondPanel';
 
